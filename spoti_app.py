@@ -32,17 +32,27 @@ def fetch_liked_songs():
     tracks = []
 
     #Loop through results and extract tracks info
-    for items in results['items']:
-        track = items['track']
-        track_info = {
-            'id': track['id'],
-            'Name':track['name'],
-            'Artist': ', '.join([artist['name'] for artist in track['artists']]),
-            'Album': track['album']['name'],
-            'Release Date': track['album']['release_date'],
-            'Popularity': track['popularity']
-        }
-        tracks.append(track_info)
+    while results :
+        for items in results['items']:
+            track = items['track']
+            track_info = {
+                'id': track['id'],
+                'Name':track['name'],
+                'Artist': ', '.join([artist['name'] for artist in track['artists']]),
+                'Album': track['album']['name'],
+                'Release Date': track['album']['release_date'],
+                'Popularity': track['popularity']
+            }
+            tracks.append(track_info)
+
+
+        #chck more tracks to fetrch
+        if results['next']:
+            results = sp.next(results)
+        else:
+            results = None
+
+            #NEED
     return tracks
 a = "2"
 
@@ -66,8 +76,9 @@ def create_playlist_and_add_songs(tracks):
     # Extract the track IDs
     track_ids = [track['id'] for track in tracks]
     
-    # Add the tracks to the new playlist
-    sp.user_playlist_add_tracks(user=user_id, playlist_id=playlist['id'], tracks=track_ids)
+     # Add the tracks to the new playlist in batches of 100
+    for i in range(0, len(track_ids), 100):
+        sp.user_playlist_add_tracks(user=user_id, playlist_id=playlist['id'], tracks=track_ids[i:i+100])
 
     print(f"Created playlist '{playlist_name}' with {len(track_ids)} tracks.")
 
@@ -78,6 +89,8 @@ def create_playlist_and_add_songs(tracks):
 if __name__ == '__main__':
     tracks = fetch_liked_songs()
     print("Fetched liked songs:", tracks)
+    #print amount of liked songs
+    print(f"Found {len(tracks)} liked songs.")
     create_playlist_and_add_songs(tracks)
     print("Liked songs have been added to the new playlist.")
 
